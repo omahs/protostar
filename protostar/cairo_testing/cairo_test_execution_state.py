@@ -4,7 +4,9 @@ from dataclasses import dataclass
 
 from typing_extensions import Self
 
-from protostar.cheatable_starknet.cheatables import CheatableStarknetFacade
+from protostar.cheatable_starknet.cheatables.cheatable_starknet_facade import (
+    CheatableStarknetFacade,
+)
 from protostar.compiler import ProjectCompiler
 from protostar.testing.stopwatch import Stopwatch
 from protostar.testing.test_config import TestConfig

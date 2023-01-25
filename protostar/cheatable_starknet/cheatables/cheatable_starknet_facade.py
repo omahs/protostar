@@ -13,7 +13,7 @@ from starkware.starknet.testing.state import StarknetState
 from starkware.storage.dict_storage import DictStorage
 from starkware.storage.storage import FactFetchingContext
 
-from protostar.cheatable_starknet.cheatables import CheatableCachedState
+from .cheatable_cached_state import CheatableCachedState
 
 
 class CheatableStarknetFacade:
