@@ -2,7 +2,7 @@
 import logging
 import re
 from dataclasses import dataclass
-from typing import Optional, Tuple, cast, List, TYPE_CHECKING, Any
+from typing import Optional, Tuple, cast, TYPE_CHECKING
 from copy import deepcopy
 
 from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
@@ -31,15 +31,17 @@ from starkware.starknet.core.os import os_utils, syscall_utils
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.definitions.general_config import StarknetGeneralConfig
 from starkware.starknet.public import abi as starknet_abi
-from starkware.starknet.services.api.contract_class import EntryPointType
 from starkware.starkware_utils.error_handling import (
     StarkException,
     wrap_with_stark_exception,
 )
+from starkware.starknet.services.api.contract_class import EntryPointType
 
 from protostar.cheatable_starknet.cheaters.transaction_revert_exception import (
     TransactionRevertException,
 )
+from protostar.starknet.address import Address
+from protostar.starknet.selector import Selector
 
 from .cheatable_syscall_handler import CheatableSysCallHandler
 
@@ -55,36 +57,26 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class CheatableExecuteEntryPoint(ExecuteEntryPoint):
-    cheaters: "CairoCheaters"
     max_steps: Optional[int] = None
     "``None`` means default Cairo value."
 
     @classmethod
-    def create_with_cheaters(
+    def create_for_protostar(
         cls,
-        contract_address: int,
-        calldata: List[int],
-        entry_point_selector: int,
-        cheaters: "CairoCheaters",
+        contract_address: Address,
+        calldata: list[int],
+        entry_point_selector: Selector,
     ) -> "CheatableExecuteEntryPoint":
         return cls(
-            entry_point_selector=entry_point_selector,
+            entry_point_selector=int(entry_point_selector),
             calldata=calldata,
-            contract_address=contract_address,
-            cheaters=cheaters,
+            contract_address=int(contract_address),
             code_address=None,
             class_hash=None,
             call_type=CallType.CALL,
             entry_point_type=EntryPointType.EXTERNAL,
             caller_address=0,
         )
-
-    @classmethod
-    def factory(cls, cheaters: "CairoCheaters") -> type[ExecuteEntryPoint]:
-        def factory_function(*args: Any, **kwargs: Any) -> ExecuteEntryPoint:
-            return cls(*args, cheaters=cheaters, **kwargs)
-
-        return cast(type[ExecuteEntryPoint], factory_function)
 
     def _run(
         self,
@@ -135,9 +127,7 @@ class CheatableExecuteEntryPoint(ExecuteEntryPoint):
             state, StateSyncifier
         ), "Sync state is not a state syncifier!"  # This should always be true
         syscall_handler = CheatableSysCallHandler(
-            execute_entry_point_cls=CheatableExecuteEntryPoint.factory(
-                cheaters=self.cheaters,
-            ),
+            execute_entry_point_cls=CheatableExecuteEntryPoint,
             tx_execution_context=tx_execution_context,
             state=state,
             resources_manager=resources_manager,
