@@ -20,6 +20,8 @@ from protostar.cheatable_starknet.callable_hint_locals import (
     ExpectEventsHintLocal,
     LoadHintLocal,
     MockCallHintLocal,
+    ExpectCallHintLocal,
+    StopExpectCallHintLocal,
 )
 from protostar.cheatable_starknet.cheatables.cheatable_cached_state import (
     CheatableCachedState,
@@ -28,6 +30,7 @@ from protostar.cheatable_starknet.controllers import (
     StorageController,
     ContractsController,
     BlockInfoController,
+    ExpectCallController,
 )
 from protostar.cheatable_starknet.controllers.expect_events_controller import (
     ExpectEventsController,
@@ -94,6 +97,20 @@ class CairoSharedHintLocalFactory:
                 ),
             ),
             MockCallHintLocal(controller=contracts_controller),
+            ExpectCallHintLocal(
+                controller=ExpectCallController(
+                    test_finish_hook=self._test_finish_hook,
+                    test_execution_state=self._test_execution_state,
+                    cheatable_state=self._test_execution_state.cheatable_state,
+                )
+            ),
+            StopExpectCallHintLocal(
+                controller=ExpectCallController(
+                    test_finish_hook=self._test_finish_hook,
+                    test_execution_state=self._test_execution_state,
+                    cheatable_state=self._test_execution_state.cheatable_state,
+                )
+            ),
         ]
 
 
