@@ -46,15 +46,18 @@ class ExpectCallController:
         data_for_address = self._cheatable_state.expected_contract_calls.get(
             contract_address
         )
-        if (
-            data_for_address
-            and (expected_call.fn_selector, expected_call.calldata) in data_for_address
-        ):
-            raise ExpectedCallException(
-                contract_address=contract_address,
-                fn_name=str(expected_call.fn_selector),
-                calldata=expected_call.calldata,
-            )
+        if not data_for_address:
+            return
+        for selector, calldata in data_for_address:
+            if (
+                int(expected_call.fn_selector) == selector
+                and expected_call.calldata == calldata
+            ):
+                raise ExpectedCallException(
+                    contract_address=contract_address,
+                    fn_name=str(expected_call.fn_selector),
+                    calldata=expected_call.calldata,
+                )
 
     def remove_expected_call(self, expected_call: ExpectedCall):
         data_for_address = self._cheatable_state.expected_contract_calls.get(
