@@ -1,40 +1,85 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from protostar.starknet import CairoData, RawAddress
+from protostar.testing.test_environment_exceptions import ExpectedCallException
+from protostar.starknet import CairoOrPythonData, Address
+from protostar.starknet.selector import Selector
 
 if TYPE_CHECKING:
     from protostar.testing import Hook
-    from protostar.cairo_testing import CairoTestExecutionState
     from protostar.cheatable_starknet.cheatables.cheatable_cached_state import (
         CheatableCachedState,
     )
 
 
 @dataclass
-class CallData:
-    address: RawAddress
-    fn_name: str
-    calldata: CairoData
+class ExpectedCall:
+    address: Address
+    fn_selector: Selector
+    calldata: CairoOrPythonData
 
 
 class ExpectCallController:
     def __init__(
         self,
         test_finish_hook: "Hook",
-        test_execution_state: "CairoTestExecutionState",
         cheatable_state: "CheatableCachedState",
     ) -> None:
-        self._test_execution_state = test_execution_state
         self._test_finish_hook = test_finish_hook
         self._cheatable_state = cheatable_state
         self._test_finish_hook.on(self.assert_no_expected_calls_left)
 
-    def add_expected_call(self, expected_call: CallData):
-        pass
+    def add_expected_call(self, expected_call: ExpectedCall):
+        contract_address = Address(int(expected_call.address))
+        calldata = expected_call.calldata
+        if self._cheatable_state.expected_contract_calls.get(contract_address):
+            self._cheatable_state.expected_contract_calls[contract_address].append(
+                (int(expected_call.fn_selector), calldata)
+            )
+        else:
+            self._cheatable_state.expected_contract_calls[contract_address] = [
+                (int(expected_call.fn_selector), calldata)
+            ]
 
-    def remove_expected_call(self, expected_call: CallData):
-        pass
+    def stop_expecing_call(self, expected_call: ExpectedCall):
+        contract_address = expected_call.address
+        data_for_address = self._cheatable_state.expected_contract_calls.get(
+            contract_address
+        )
+        if (
+            data_for_address
+            and (expected_call.fn_selector, expected_call.calldata) in data_for_address
+        ):
+            raise ExpectedCallException(
+                contract_address=contract_address,
+                fn_name=str(expected_call.fn_selector),
+                calldata=expected_call.calldata,
+            )
+
+    def remove_expected_call(self, expected_call: ExpectedCall):
+        data_for_address = self._cheatable_state.expected_contract_calls.get(
+            expected_call.address
+        )
+        if data_for_address is not None:
+            for index, (selector, calldata) in enumerate(data_for_address):
+                if (
+                    selector == int(expected_call.fn_selector)
+                    and calldata == expected_call.calldata
+                ):
+                    del data_for_address[index]
+            if not data_for_address:
+                del self._cheatable_state.expected_contract_calls[expected_call.address]
 
     def assert_no_expected_calls_left(self):
-        pass
+        try:
+            address = next(iter(self._cheatable_state.expected_contract_calls))
+            fn_selector, calldata = self._cheatable_state.expected_contract_calls[
+                address
+            ][0]
+            raise ExpectedCallException(
+                contract_address=address,
+                fn_name=str(fn_selector),
+                calldata=calldata,
+            )
+        except StopIteration:
+            pass
