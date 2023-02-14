@@ -22,6 +22,15 @@ func increase_balance{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_chec
 }
 
 @external
+func increase_balance2{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    amount: felt
+) {
+    let (res) = balance.read();
+    balance.write(res + amount);
+    return ();
+}
+
+@external
 func increase_balance_with_multiple_values{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     amount1: felt, amount2: felt, amount3: felt
 ) {

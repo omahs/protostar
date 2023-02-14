@@ -52,3 +52,42 @@ func test_expect_call_wrong_calldata() {
   return ();
 }
 
+func test_expect_call_partial_fail() {
+  %{
+    addr = deploy_contract("./src/basic.cairo").ok.contract_address
+    expect_call(addr, "increase_balance_with_multiple_values", [1, 2, 3, 4])
+    call(addr, "increase_balance_with_multiple_values", [1, 2, 3])
+  %}
+
+  return ();
+}
+
+func test_expect_call_expected_but_not_found() {
+  %{
+    addr = deploy_contract("./src/basic.cairo").ok.contract_address
+    expect_call(addr, "get_balance", [])
+  %}
+
+  return ();
+}
+
+func test_expect_call_wrong_function_called() {
+  %{
+    addr = deploy_contract("./src/basic.cairo").ok.contract_address
+    expect_call(addr, "increase_balance", [10])
+    call(addr, "increase_balance2", [10])
+  %}
+
+  return ();
+}
+
+func test_expect_call_after_stop() {
+  %{
+    addr = deploy_contract("./src/basic.cairo").ok.contract_address
+    expect_call(addr, "get_balance", [])
+    stop_expect_call(addr, "get_balance", [])
+    call(addr, "get_balance")
+  %}
+
+  return ();
+}
