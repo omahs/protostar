@@ -3,6 +3,8 @@ func test_expect_call_success() {
     addr = deploy_contract("./src/basic.cairo").ok.contract_address
     expect_call(addr, "get_balance", [])
     call(addr, "get_balance").ok
+    expect_call(addr, "increase_balance_with_multiple_values", [1, 2, 3])
+    call(addr, "increase_balance_with_multiple_values", [1, 2, 3])
   %}
 
   return ();
@@ -28,3 +30,25 @@ func test_expect_call_after_the_call() {
 
   return ();
 }
+
+func test_expect_call_wrong_address() {
+  %{
+    addr1 = deploy_contract("./src/basic.cairo").ok.contract_address
+    addr2 = deploy_contract("./src/basic.cairo").ok.contract_address
+    expect_call(addr1, "get_balance", [])
+    call(addr2, "get_balance")
+  %}
+
+  return ();
+}
+
+func test_expect_call_wrong_calldata() {
+  %{
+    addr = deploy_contract("./src/basic.cairo").ok.contract_address
+    expect_call(addr, "increase_balance_with_multiple_values", [1, 2, 3])
+    call(addr, "increase_balance_with_multiple_values", [1, 2, 4])
+  %}
+
+  return ();
+}
+

@@ -19,8 +19,8 @@ def protostar_fixture(create_protostar_project: CreateProtostarProjectFixture):
 async def test_expect_call(protostar: ProtostarFixture):
     protostar.create_contracts(
         {
-            "basic": CONTRACTS_PATH / "basic_contract.cairo",
-            "proxy": CONTRACTS_PATH / "proxy_for_basic_contract.cairo",
+            "basic": CONTRACTS_PATH / "basic_with_multiple_args.cairo",
+            # "proxy": CONTRACTS_PATH / "proxy_for_basic_contract.cairo", TODO
         }
     )
     testing_summary = await protostar.run_test_runner(
@@ -35,8 +35,8 @@ async def test_expect_call(protostar: ProtostarFixture):
         ],
         expected_failed_test_cases_names=[
             "test_expect_call_after_the_call",
-            # "test_expect_call_wrong_address",
-            # "test_expect_call_wrong_calldata",
+            "test_expect_call_wrong_address",
+            "test_expect_call_wrong_calldata",
             # "test_expect_call_partial_fail",
             # "test_expect_call_expected_but_not_found",
             # "test_expect_call_wrong_function_called",
